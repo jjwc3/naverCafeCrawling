@@ -14,6 +14,7 @@ import requests
 import matplotlib.pyplot as plt
 import json
 from datetime import datetime
+from tqdm import tqdm
 
 
 cafeId = 29844827
@@ -49,7 +50,7 @@ ogq_name=["우하잉하", "ㅇㄱㅇ", "따봉", "끄덕끄덕", "잉모노자�
 
 result = {char: 0 for char in ogq_name}
 
-for currentArticleId in range(articleId, latestArticleId + 1):
+for currentArticleId in tqdm(range(articleId, latestArticleId + 1)):
     # 아래 url은 댓글 전체가 안 나옴, 대신 commentCount로 페이지 수 세기 위해 GET 요청
     try:
         base_url = f"https://apis.naver.com/cafe-web/cafe-articleapi/v3/cafes/{cafeId}/articles/{currentArticleId}"
