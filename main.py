@@ -5,31 +5,43 @@ Filter: Fetch/XHR 선택하고 뜨는 것들 중 숫자로 시작하는 것 클�
 Headers에 Request URL이 게시글 정보 담은 링크
 링크에서 cafes 뒤에 있는 숫자가 cafeId, articles 뒤에 있는 숫자가 articleId임.
 이 방식대로 첫번째 글이랑 마지막 글 articleId 확인
-그 링크에 접속해서 다시 network에서 articleId랑 일치하는거 들어가서 Cookies 들어가면 쿠키 나옴.
-걔네들 하나하나 복붙해서 JSON 파일로 저장해서 불러오거나(코드 구현 안함) 아래처럼 텍스트로 붙여넣기(value 숫자 허용 안됨. 숫자값도 쌍따옴표 씌워서)
+Chrome Webstore에서 Export cookie JSON file for Puppeteer 설치 후 경로 입력
+JSON 형식: [{name:"name1",value:"value1",...},{name:"name2",value:"value2",...},...]
+
+엑셀에서 데이터 불러올 때 Data - Get Data - JSON으로 파일 불러오고, Parse - JSON 후 To Table - Close & load
 """
 import requests
 import matplotlib.pyplot as plt
+import json
+from datetime import datetime
 
 
 cafeId = 29844827
 articleId = 88600
+with open(input("Cookies Path: "), 'r') as f:
+    cookies_before = json.load(f)
+cookies:dict = {}
+for i in cookies_before:
+    cookies[i["name"]] = i["value"]
+print(cookies)
 latestArticleId = int(input("Latest ArticleId: "))
-cookies = {
-    "BUC": "DJ3NcOd3TzDkV00M2WI0qLqJdyVuZp2ZVvzVJzSvlFs=",
-    "NAC": "u7udBcAVmehsA",
-    "NACT": "1",
-    "NID_AUT": "NnuoweclFZ7H3YuYtXmwiLJcKLqvYahTemSQvvrEhcx04lzOf+GvokDVGFXDo8YS",
-    "NID_JKL": "oIoUYgjhy9BMrlOdeZ3m2nFQE9YB3nIESDDdMq6/K0U=",
-    "NID_SES": "AAABgI82GSMAcSQCytfaRLc97MQDtWB7ijsxsnScrZl8q+Gre6Hj9iwinHs31tGlq4OAbA1mxSHjmKhtL+OZVSAgXnJ62tNrR/tU/r9IsL/yHRlkVjM0HZLu81Bf45cQXgk4Uk3a6Mf+Cf1ddduExy5JgAkGTcWuJJxUjVyElcRjmK6NYf38kUkmYh198pgTEiD/W5RJBnwMyuEpPZrEJQT/Jqj9ScYbWRHZly7Qq6YpkE/c06i/n4s5zF0F/H9j/GsrV5qqyWIttWwHeS43xzGOJDRyQH7idKJVHbZjsTtIx/hsiTrRVxla3kIZVK1B8DTZW2wEqXTaR5E5KMjiPRM6UKJ3CfemhWErQ7Ecvn3mUCvU4UxTL1dJr2BjKf9hjLvNp8c04PvZAp8AIh4/0FzdkCTaGIlGa+fFqOm9JBwyLs5K5Ic+h/f6kPi6RXoeKT0+pnorgGczG4F5Wi4KlDDBkrNzAPPIjSMaVETWAMd3olch4hrWvFLrP21kQypzanZPKQ==",
-    "NNB": "LBM7FMANTW6GK",
-    "SRT30": "1735566894",
-    "SRT5": "1735568238",
-    "_ga": "GA1.2.1790064785.1707654851",
-    "_ga_6Z6DP60WFK": "GS1.2.1707654851.1.0.1707654851.60.0.0",
-    "nid_inf": "101025269",
-    "perf_dv6Tr4n": "1"
-}
+# cookies = {
+#     "BUC": "DJ3N~~~",
+#     "NAC": "u7u~~~~",
+#     "NACT": "1",
+#     "NID_AUT": "Nnu~~~",
+#     "NID_JKL": "oIo~~~",
+#     "NID_SES": "AAABgI82G~~~",
+#     "NNB": "LB~~~",
+#     "SRT30": "17~~~",
+#     "SRT5": "17~~~",
+#     "_ga": "GA1.2.1~~~",
+#     "_ga_6Z6DP60WFK": "GS1.2.17~~",
+#     "nid_inf": "1~~~",
+#     "perf_dv6Tr4n": "1"
+# }
+
+
 
 # ogq_origin = "ogq_627c80ea90e91-"
 
@@ -44,7 +56,7 @@ for currentArticleId in range(articleId, latestArticleId + 1):
         res1 = requests.get(base_url, cookies=cookies).json()
         page_count = res1["result"]["article"]["commentCount"] // 100 + 1
     except:
-        print("Article Not Exist : Pass")
+        print("Cookies Invalid or Article Not Exist : Pass")
         continue
 
     try:
@@ -58,33 +70,38 @@ for currentArticleId in range(articleId, latestArticleId + 1):
                 result[char] += res2.count(pattern)
             # print(res2.count("ogq_627c80ea90e91-"))
     except:
-        print("An Error Occured")
+        print("An Error Occured : Pass")
         pass
 
 print(result)
+result_json = json.dumps(result, ensure_ascii=False)
+now = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+
+with open(f'{now}_from_{articleId}_to_{latestArticleId}.json','w', encoding="UTF-8") as f:
+    json.dump(result_json, f, ensure_ascii=False)
+
+open_pyplot = input("Open Pyplot Graph? (Y/else): ")
+if open_pyplot in ['Y', 'y']:
+    # 키와 값 분리
+    labels = list(result.keys())
+    values = list(result.values())
+
+    # 그래프 그리기
+    plt.rc('font', family="AppleGothic")
+    plt.rcParams['axes.unicode_minus'] = False
+    plt.figure(figsize=(12, 6))
+    plt.bar(labels, values, color='skyblue', edgecolor='black')
 
 
 
-# 키와 값 분리
-labels = list(result.keys())
-values = list(result.values())
+    # 제목과 레이블 설정
+    plt.title('데이터의 막대형 그래프', fontsize=16)
+    plt.xlabel('항목', fontsize=12)
+    plt.ylabel('값', fontsize=12)
 
-# 그래프 그리기
-# plt.rcParams['font.family'] = "AppleGothic"
-plt.rc('font', family="AppleGothic")
-plt.figure(figsize=(12, 6))
-plt.bar(labels, values, color='skyblue', edgecolor='black')
+    # X축 레이블 회전
+    plt.xticks(rotation=45, ha='right', fontsize=10)
 
-
-
-# 제목과 레이블 설정
-plt.title('데이터의 막대형 그래프', fontsize=16)
-plt.xlabel('항목', fontsize=12)
-plt.ylabel('값', fontsize=12)
-
-# X축 레이블 회전
-plt.xticks(rotation=45, ha='right', fontsize=10)
-
-# 그래프 표시
-plt.tight_layout()  # 레이아웃 자동 조정
-plt.show()
+    # 그래프 표시
+    plt.tight_layout()  # 레이아웃 자동 조정
+    plt.show()
