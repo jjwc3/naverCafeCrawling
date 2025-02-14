@@ -18,14 +18,16 @@ from tqdm import tqdm
 
 
 cafeId = 29844827
-articleId = 88600
+# articleId = 88600
+articleId = 115173
 with open(input("Cookies Path: "), 'r') as f:
     cookies_before = json.load(f)
 cookies:dict = {}
 for i in cookies_before:
     cookies[i["name"]] = i["value"]
 print(cookies)
-latestArticleId = int(input("Latest ArticleId: "))
+# latestArticleId = int(input("Latest ArticleId: "))
+latestArticleId = 115173
 # cookies = {
 #     "BUC": "DJ3N~~~",
 #     "NAC": "u7u~~~~",
@@ -55,7 +57,13 @@ for currentArticleId in tqdm(range(articleId, latestArticleId + 1)):
     try:
         base_url = f"https://apis.naver.com/cafe-web/cafe-articleapi/v3/cafes/{cafeId}/articles/{currentArticleId}"
         res1 = requests.get(base_url, cookies=cookies).json()
-        page_count = res1["result"]["article"]["commentCount"] // 100 + 1
+        comment_count = res1["result"]["article"]["commentCount"]
+        if comment_count % 100 == 0:
+            page_count = res1["result"]["article"]["commentCount"] // 100
+        else:
+            page_count = res1["result"]["article"]["commentCount"] // 100 + 1
+
+        print(f"page count: {page_count}")
     except:
         print("Cookies Invalid or Article Not Exist : Pass")
         continue
@@ -64,11 +72,13 @@ for currentArticleId in tqdm(range(articleId, latestArticleId + 1)):
         for page in range(1, page_count+1):
             # 이게 댓글 전체 다 나옴, 페이지별로 100개씩
             url = f"https://apis.naver.com/cafe-web/cafe-articleapi/v2/cafes/{cafeId}/articles/{currentArticleId}/comments/pages/{page}?requestFrom=A&orderBy=asc"
+            print(f"url: {url}")
             res2 = str(requests.get(url, cookies=cookies).json())
             # print(response)
             for j, char in enumerate(ogq_name, start=1):
                 pattern = f"ogq_627c80ea90e91-{j}-"
                 result[char] += res2.count(pattern)
+                print(f"index: {j},{char}, count: {res2.count(pattern)}")
             # print(res2.count("ogq_627c80ea90e91-"))
     except:
         print("An Error Occured : Pass")
